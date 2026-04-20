@@ -1,0 +1,12 @@
+{
+  "callsign": "KN6WPU",
+  "auto_output": "System default",
+  "auto_input": "System default",
+  "radio_output": "Speakers (USB Audio Device)",
+  "radio_input": "Microphone (USB Audio Device)",
+  "ptt_port": "COM6",
+  "repeater_timeout_seconds": 300,
+  "repeater_warmup_tenths": 10,
+  "repeater_reset_tenths": 30,
+  "editor_mp3_path": "C:\\Users\\Gyula Szentirmay\\Downloads\\Report2529.mp3"
+}

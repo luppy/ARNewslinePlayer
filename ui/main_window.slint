@@ -1,0 +1,659 @@
+import { Button, ComboBox, LineEdit, ListView, TabWidget, TextEdit } from "std-widgets.slint";
+
+export component MainWindow inherits Window {
+    title: "Amateur Newsline Player";
+    preferred-width: 960px;
+    preferred-height: 820px;
+    min-width: 820px;
+    min-height: 680px;
+    in-out property <int> active-tab: 0;
+
+    in property <[string]> audio-output-options;
+    in property <[string]> audio-input-options;
+    in property <[string]> radio-output-options;
+    in property <[string]> radio-input-options;
+    in property <[string]> ptt-port-options;
+
+    in-out property <string> callsign;
+    in-out property <int> auto-output-index;
+    in-out property <int> auto-input-index;
+    in-out property <int> radio-output-index;
+    in-out property <int> radio-input-index;
+    in-out property <int> ptt-port-index;
+    in-out property <string> timeout-value;
+    in-out property <string> warmup-seconds;
+    in-out property <string> reset-seconds;
+    in-out property <string> setup-status;
+    in-out property <string> editor-file-path;
+    in-out property <string> editor-status;
+    in-out property <string> editor-play-cursor: "0:00.00";
+    in-out property <bool> editor-playing;
+    in property <[string]> editor-segments;
+    in-out property <int> selected-editor-segment: -1;
+    in-out property <string> player-play-cursor: "0:00.00";
+    in-out property <string> player-segment-remaining: "0:00.00";
+    in-out property <string> player-status: "Ready";
+    in-out property <bool> player-playing;
+    in property <[string]> player-segments;
+    in-out property <int> selected-player-segment: -1;
+
+    in-out property <string> saved-callsign;
+    in-out property <string> saved-auto-output;
+    in-out property <string> saved-auto-input;
+    in-out property <string> saved-radio-output;
+    in-out property <string> saved-radio-input;
+    in-out property <string> saved-ptt-port;
+    in-out property <string> saved-timeout-value;
+    in-out property <string> saved-warmup-seconds;
+    in-out property <string> saved-reset-seconds;
+
+    out property <bool> setup-dirty:
+        root.callsign != root.saved-callsign
+        || auto-output.current-value != root.saved-auto-output
+        || auto-input.current-value != root.saved-auto-input
+        || radio-output.current-value != root.saved-radio-output
+        || radio-input.current-value != root.saved-radio-input
+        || ptt-port.current-value != root.saved-ptt-port
+        || root.timeout-value != root.saved-timeout-value
+        || root.warmup-seconds != root.saved-warmup-seconds
+        || root.reset-seconds != root.saved-reset-seconds;
+
+    callback save-setup(
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+    );
+    callback browse-editor-file();
+    callback editor-rewind(int);
+    callback editor-toggle-playback();
+    callback editor-forward(int);
+    callback editor-last-five-seconds();
+    callback editor-prev-gap();
+    callback editor-split();
+    callback editor-next-gap();
+    callback editor-first-five-seconds();
+    callback editor-segment-double-clicked(int);
+    callback editor-delete-segment(int);
+    callback player-ptt();
+    callback player-id();
+    callback player-rewind(int);
+    callback player-toggle-playback();
+    callback player-forward(int);
+    callback player-segment-selected(int);
+    callback player-segment-double-clicked(int);
+    callback active-tab-changed(int);
+
+    changed active-tab => {
+        root.active-tab-changed(root.active-tab);
+    }
+
+    TabWidget {
+        current-index <=> root.active-tab;
+
+        Tab {
+            title: "Setup";
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 14px;
+
+                Text {
+                    text: "Setup";
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #1d2733;
+                }
+
+                Text {
+                    text: "Configure where episodes come from and where prepared audio should be stored.";
+                    color: #52606d;
+                }
+
+                GridLayout {
+                    spacing: 12px;
+
+                    Row {
+                        Text {
+                            text: "Callsign";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        LineEdit {
+                            text <=> root.callsign;
+                            placeholder-text: "N0CALL";
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Auto output";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        auto-output := ComboBox {
+                            model: root.audio-output-options;
+                            current-index <=> root.auto-output-index;
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Auto input";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        auto-input := ComboBox {
+                            model: root.audio-input-options;
+                            current-index <=> root.auto-input-index;
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Radio output";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        radio-output := ComboBox {
+                            model: root.radio-output-options;
+                            current-index <=> root.radio-output-index;
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Radio input";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        radio-input := ComboBox {
+                            model: root.radio-input-options;
+                            current-index <=> root.radio-input-index;
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "PTT";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        ptt-port := ComboBox {
+                            model: root.ptt-port-options;
+                            current-index <=> root.ptt-port-index;
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Repeater timeout";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px;
+
+                            LineEdit {
+                                text <=> root.timeout-value;
+                                placeholder-text: "5:00";
+                            }
+
+                            Text {
+                                text: "min:sec";
+                                vertical-alignment: center;
+                                color: #52606d;
+                            }
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Repeater warmup";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px;
+
+                            LineEdit {
+                                text <=> root.warmup-seconds;
+                                placeholder-text: "1.0";
+                            }
+
+                            Text {
+                                text: "sec";
+                                vertical-alignment: center;
+                                color: #52606d;
+                            }
+                        }
+                    }
+
+                    Row {
+                        Text {
+                            text: "Repeater reset";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px;
+
+                            LineEdit {
+                                text <=> root.reset-seconds;
+                                placeholder-text: "5.0";
+                            }
+
+                            Text {
+                                text: "sec";
+                                vertical-alignment: center;
+                                color: #52606d;
+                            }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+
+                    Button {
+                        text: "Save";
+                        enabled: root.setup-dirty;
+                        clicked => {
+                            root.save-setup(
+                                root.callsign,
+                                auto-output.current-value,
+                                auto-input.current-value,
+                                radio-output.current-value,
+                                radio-input.current-value,
+                                ptt-port.current-value,
+                                root.timeout-value,
+                                root.warmup-seconds,
+                                root.reset-seconds,
+                            );
+                        }
+                    }
+
+                    Text {
+                        text: root.setup-status;
+                        vertical-alignment: center;
+                        color: root.setup-dirty ? #a15c00 : #52606d;
+                    }
+                }
+            }
+        }
+
+        Tab {
+            title: "Editor";
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 14px;
+
+                Text {
+                    text: "Editor";
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #1d2733;
+                }
+
+                Text {
+                    text: "Choose the Newsline MP3 file to decode before editing.";
+                    color: #52606d;
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    LineEdit {
+                        text <=> root.editor-file-path;
+                        read-only: true;
+                        placeholder-text: "Choose an MP3 file";
+                    }
+
+                    Button {
+                        text: "Browse";
+                        clicked => {
+                            root.browse-editor-file();
+                        }
+                    }
+                }
+
+                Text {
+                    text: root.editor-status;
+                    color: #52606d;
+                }
+
+                GridLayout {
+                    spacing: 12px;
+
+                    Row {
+                        Text {
+                            text: "Play cursor";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        LineEdit {
+                            text <=> root.editor-play-cursor;
+                            read-only: true;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Button {
+                        text: "-1 min";
+                        clicked => {
+                            root.editor-rewind(60);
+                        }
+                    }
+
+                    Button {
+                        text: "-15 sec";
+                        clicked => {
+                            root.editor-rewind(15);
+                        }
+                    }
+
+                    Button {
+                        text: "-5 sec";
+                        clicked => {
+                            root.editor-rewind(5);
+                        }
+                    }
+
+                    Button {
+                        text: "-1 sec";
+                        clicked => {
+                            root.editor-rewind(1);
+                        }
+                    }
+
+                    Button {
+                        text: root.editor-playing ? "Stop" : "Play";
+                        clicked => {
+                            root.editor-toggle-playback();
+                        }
+                    }
+
+                    Button {
+                        text: "+1 sec";
+                        clicked => {
+                            root.editor-forward(1);
+                        }
+                    }
+
+                    Button {
+                        text: "+5 sec";
+                        clicked => {
+                            root.editor-forward(5);
+                        }
+                    }
+
+                    Button {
+                        text: "+15 sec";
+                        clicked => {
+                            root.editor-forward(15);
+                        }
+                    }
+
+                    Button {
+                        text: "+1 min";
+                        clicked => {
+                            root.editor-forward(60);
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Button {
+                        text: "Last 5 sec";
+                        clicked => {
+                            root.editor-last-five-seconds();
+                        }
+                    }
+
+                    Button {
+                        text: "Prev gap";
+                        clicked => {
+                            root.editor-prev-gap();
+                        }
+                    }
+
+                    Button {
+                        text: "Split";
+                        clicked => {
+                            root.editor-split();
+                        }
+                    }
+
+                    Button {
+                        text: "Next Gap";
+                        clicked => {
+                            root.editor-next-gap();
+                        }
+                    }
+
+                    Button {
+                        text: "First 5 sec";
+                        clicked => {
+                            root.editor-first-five-seconds();
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Segments";
+                    color: #1d2733;
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    ListView {
+                        min-height: 260px;
+
+                        for segment[index] in root.editor-segments : Rectangle {
+                            height: 32px;
+                            background: root.selected-editor-segment == index ? #d8e9ff : Math.mod(index, 2) == 0 ? #f6f8fa : white;
+
+                            Text {
+                                x: 8px;
+                                width: parent.width - 16px;
+                                text: segment;
+                                vertical-alignment: center;
+                                color: #1d2733;
+                            }
+
+                            TouchArea {
+                                clicked => {
+                                    root.selected-editor-segment = index;
+                                }
+
+                                double-clicked => {
+                                    root.selected-editor-segment = index;
+                                    root.editor-segment-double-clicked(index);
+                                }
+                            }
+                        }
+                    }
+
+                    Button {
+                        text: "Delete";
+                        enabled: root.selected-editor-segment > 0;
+                        clicked => {
+                            root.editor-delete-segment(root.selected-editor-segment);
+                        }
+                    }
+                }
+            }
+        }
+
+        Tab {
+            title: "Player";
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 14px;
+
+                Text {
+                    text: "Player";
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #1d2733;
+                }
+
+                Text {
+                    text: "Control segment playback and transmitter timing.";
+                    color: #52606d;
+                }
+
+                GridLayout {
+                    spacing: 12px;
+
+                    Row {
+                        Text {
+                            text: "Play cursor";
+                            color: #1d2733;
+                            vertical-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px;
+
+                            LineEdit {
+                                text <=> root.player-play-cursor;
+                                read-only: true;
+                            }
+
+                            Text {
+                                text: "remaining in segment";
+                                vertical-alignment: center;
+                                color: #52606d;
+                            }
+
+                            LineEdit {
+                                text <=> root.player-segment-remaining;
+                                read-only: true;
+                            }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Button {
+                        text: "PTT";
+                        clicked => {
+                            root.player-ptt();
+                        }
+                    }
+
+                    LineEdit {
+                        text <=> root.player-status;
+                        read-only: true;
+                    }
+
+                    Button {
+                        text: "ID";
+                        clicked => {
+                            root.player-id();
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Button {
+                        text: "-30 sec";
+                        clicked => {
+                            root.player-rewind(30);
+                        }
+                    }
+
+                    Button {
+                        text: "-5 sec";
+                        clicked => {
+                            root.player-rewind(5);
+                        }
+                    }
+
+                    Button {
+                        text: root.player-playing ? "Stop" : "Play";
+                        clicked => {
+                            root.player-toggle-playback();
+                        }
+                    }
+
+                    Button {
+                        text: "+5 sec";
+                        clicked => {
+                            root.player-forward(5);
+                        }
+                    }
+
+                    Button {
+                        text: "+30 sec";
+                        clicked => {
+                            root.player-forward(30);
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Segments";
+                    color: #1d2733;
+                }
+
+                ListView {
+                    min-height: 260px;
+
+                    for segment[index] in root.player-segments : Rectangle {
+                        height: 32px;
+                        background: root.selected-player-segment == index ? #d8e9ff : Math.mod(index, 2) == 0 ? #f6f8fa : white;
+
+                        Text {
+                            x: 8px;
+                            width: parent.width - 16px;
+                            text: segment;
+                            vertical-alignment: center;
+                            color: #1d2733;
+                        }
+
+                        TouchArea {
+                            clicked => {
+                                root.selected-player-segment = index;
+                                root.player-segment-selected(index);
+                            }
+
+                            double-clicked => {
+                                root.selected-player-segment = index;
+                                root.player-segment-double-clicked(index);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
