@@ -156,13 +156,13 @@ impl EditorPlayback {
         let mut state = self.state.lock().expect("playback state lock poisoned");
         let target = state.position + seconds * state.source_sample_rate as f64;
         state.position = target.clamp(0.0, state.samples.len() as f64);
-        state.stop_at = None;
         state.restore_to = None;
     }
 
     pub fn seek_absolute_samples(&self, sample_pos: usize) {
         let mut state = self.state.lock().expect("playback state lock poisoned");
         state.position = (sample_pos as f64).clamp(0.0, state.samples.len() as f64);
+        state.playing = false;
         state.stop_at = None;
         state.restore_to = None;
     }
@@ -188,19 +188,6 @@ impl EditorPlayback {
             .playing
     }
 
-    pub fn play_blocking(
-        &self,
-        pcm_audio: PcmAudio,
-        output_device_name: &str,
-    ) -> Result<(), PlaybackError> {
-        self.play(pcm_audio, output_device_name)?;
-
-        while self.is_playing() {
-            std::thread::sleep(Duration::from_millis(20));
-        }
-
-        Ok(())
-    }
 }
 
 fn find_output_device(name: &str) -> Result<(cpal::Device, String), PlaybackError> {
